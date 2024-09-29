@@ -9,7 +9,8 @@ int main() {
     }
 
     if (a == 0) {
-        return 2; 
+	printf("%.10g\n", - c / b); 
+        return 0;
     }
 
     double discriminant = b * b - 4 * a * c;
