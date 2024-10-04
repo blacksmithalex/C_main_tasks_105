@@ -9,7 +9,7 @@ int main() {
     }
 
     if (a == 0) {
-	printf("%.10g\n", - c / b); 
+	printf("%.10g\n", -c / b); 
         return 0;
     }
 
