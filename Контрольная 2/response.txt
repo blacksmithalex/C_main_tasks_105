@@ -1,0 +1,113 @@
+В этом сообщении прикреплю код, который корректно обрабатывает все "плохие" случаи данных и другие моменты. Используя такой же формат обработки исключений нужно будет решить задание (его пришлю в следующем сообщении):
+
+#include <stdio.h>
+
+#include <stdlib.h>
+
+#define ERR_INVALID_LENGTH 3
+#define ERR_INVALID_ELEMENT 4
+
+void process_array(double *arr, int n) {
+    int pos = 0;
+    for (int i = 0; i < n; i++) {
+        if (arr[i] >= 0) {
+            double temp = arr[i];
+            for (int j = i; j > pos; j--) {
+                arr[j] = arr[j - 1];
+            }
+            arr[pos++] = temp;
+        }
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <output_file> <input_file>\n", argv[0]);
+        return 1;
+    }
+
+    const char *output_filename = argv[1];
+    const char *input_filename = argv[2];
+    
+    FILE *input_file = fopen(input_filename, "r");
+    if (!input_file) {
+        perror("Error opening input file");
+        return 2;
+    }
+
+    int length;
+    char length_buffer[50];
+    if (fscanf(input_file, "%49s", length_buffer) != 1 || sscanf(length_buffer, "%d", &length) != 1 || length < 0) {
+        fprintf(stderr, "Error: Invalid array size\n");
+        fclose(input_file);
+        return ERR_INVALID_LENGTH;
+    }
+
+    char extra_check;
+    if (length == 0 && fscanf(input_file, " %c", &extra_check) == 1) {
+        fprintf(stderr, "Error: Extra elements in file after array size\n");
+        fclose(input_file);
+        return ERR_INVALID_LENGTH;
+    }
+
+    if (length == 0) {
+        FILE *output_file = fopen(output_filename, "w");
+        if (!output_file) {
+            perror("Error opening output file");
+            fclose(input_file);
+            return 2;
+        }
+        fprintf(output_file, "0\n"); 
+        fclose(output_file);
+        fclose(input_file);
+        return 0; 
+    }
+
+    double *arr = malloc(length * sizeof(double));
+    if (!arr) {
+        perror("Error allocating memory");
+        fclose(input_file);
+        return 2;
+    }
+
+    for (int i = 0; i < length; i++) {
+        if (fscanf(input_file, "%lf", &arr[i]) != 1) {
+            fprintf(stderr, "Error: Invalid array element\n");
+            free(arr);
+            fclose(input_file);
+            return ERR_INVALID_ELEMENT;
+        }
+    }
+
+    if (fscanf(input_file, " %c", &extra_check) == 1) {
+        fprintf(stderr, "Error: Extra elements in file\n");
+        free(arr);
+        fclose(input_file);
+        return ERR_INVALID_ELEMENT;
+    }
+
+    fclose(input_file);
+
+    process_array(arr, length);
+
+    FILE *output_file = fopen(output_filename, "w");
+    if (!output_file) {
+        perror("Error opening output file");
+        free(arr);
+        return 2;
+    }
+
+    fprintf(output_file, "%d\n", length);
+    for (int i = 0; i < length; i++) {
+        fprintf(output_file, "%.6f\n", arr[i]);
+    }
+
+    fclose(output_file);
+    free(arr);
+    return 0;
+}
+-------
+Решить задачу:
+В двух входных файлах, имена которых передаются в аргументах командной строки, заданы массивы целых чисел по одному числу в строке. Количество чисел в файлах не задано. Ввести эти числа в два массива. Назовем эти массивы X и Y. Память под массивы выделять динамически. Ограничений на длину массивов нет. Отсортировать массивы X и Y по возрастанию их модулей. Проверить, являются ли эти отсортированные массивы арифметическими прогрессиями с одинаковыми разностями соседних членов. В случае положительного ответа на вопрос вывести на экран слово «YEs» (обратите внимание на регистр). В случае отрицательного ответа на вопрос вывести на экран слово «No» (с учётом регистра символов). Во второй строке вывести отсортированный массив X. В случае невозможности открытия файлов, или в случае отсутствия чисел хотя бы в одном из входных файлов функция main должна вернуть ненулевой код ошибки, иначе функция main должна вернуть 0. Последовательность из одного элемента считать арифметической прогрессией с неопределённой разностью, сравнимой с любой другой.
+-------
