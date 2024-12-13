@@ -38,16 +38,6 @@ int read_array_from_file(const char *filename, double *array, int size) {
     return SUCCESS;
 }
 
-double find_max(double *array, int size) {
-    double max_val = -DBL_MAX;
-    for (int i = 0; i < size; i++) {
-        if (array[i] > max_val) {
-            max_val = array[i];
-        }
-    }
-    return max_val;
-}
-
 void sort_array(double *array, int size) {
     for (int i = 0; i < size - 1; i++) {
         for (int j = 0; j < size - i - 1; j++) {
@@ -61,19 +51,19 @@ void sort_array(double *array, int size) {
 }
 
 int compare_arrays(double *a, int m, double *b, int n) {
-    double max_a = find_max(a, m);
-    double max_b = find_max(b, n);
-    int max_length = (m > n) ? m : n;
-
-    for (int i = 0; i < max_length; i++) {
-        double val_a = (i < m) ? a[i] : max_a;
-        double val_b = (i < n) ? b[i] : max_b;
-
-        if (val_a >= val_b) {
-            return 0; 
+    if (m > n)
+        return 0;
+    int bound_k = n - m;
+    for (int k = 0; k <= bound_k; k++) {
+        int flag = 1;
+        for (int i = 0; i < m; i++) {
+            if (a[i] != b[i + k])
+                flag = 0;
         }
+        if (flag == 1)
+            return 1;
     }
-    return 1; 
+    return 0; 
 }
 
 int write_result_to_file(const char *filename, const char *result) {

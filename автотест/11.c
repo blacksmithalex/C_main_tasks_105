@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <float.h> 
+#include <math.h>
 
 #define ERR_FILE -1
 #define SUCCESS 0
+#define EPS 1e-6
 
 int count_numbers_in_file(const char *filename) {
     FILE *file = fopen(filename, "r");
@@ -60,29 +62,36 @@ void sort_array(double *array, int size) {
     }
 }
 
-int compare_arrays(double *a, int m, double *b, int n) {
-    double max_a = find_max(a, m);
-    double max_b = find_max(b, n);
-    int max_length = (m > n) ? m : n;
-
-    for (int i = 0; i < max_length; i++) {
-        double val_a = (i < m) ? a[i] : max_a;
-        double val_b = (i < n) ? b[i] : max_b;
-
-        if (val_a >= val_b) {
-            return 0; 
+int compare_arrays(double *a, double *b, int n) {
+    for (int k = 1; k < n - 1; k++) {
+        int flag = 1;
+        float diff1 = a[0] - b[0];
+        for (int i = 1; i <= k; i++) {
+            float diff = a[i] - b[i];
+            if (diff1 < EPS && diff > EPS || diff1 > EPS && diff < EPS)
+                flag = 0;
         }
+        float diff2 = a[k + 1] - b[k + 1];
+        if (diff1 * diff2 > EPS)
+            flag = 0;
+        for (int i = k + 2; i < n; i++) {
+            float diff = a[i] - b[i];
+            if (diff2 < EPS && diff > EPS || diff2 > EPS && diff < EPS)
+                flag = 0;
+        }
+        if (flag == 1)
+            return k;
     }
-    return 1; 
+    return -1;
 }
 
-int write_result_to_file(const char *filename, const char *result) {
+int write_result_to_file(const char *filename, int k) {
     FILE *file = fopen(filename, "w");
     if (!file) {
         return ERR_FILE;
     }
 
-    fprintf(file, "%s\n", result);
+    fprintf(file, "%d", k);
     fclose(file);
     return SUCCESS;
 }
@@ -92,15 +101,14 @@ int main() {
     const char *file_b = "inb.txt";
     const char *output_file = "output.txt";
 
-    int m = count_numbers_in_file(file_a);
     int n = count_numbers_in_file(file_b);
 
-    if (m == ERR_FILE || n == ERR_FILE) {
+    if (n == ERR_FILE) {
         fprintf(stderr, "Error: Unable to process input files\n");
         return ERR_FILE;
     }
 
-    double *a = malloc(m * sizeof(double));
+    double *a = malloc(n * sizeof(double));
     double *b = malloc(n * sizeof(double));
     if (!a || !b) {
         perror("Error allocating memory");
@@ -109,7 +117,7 @@ int main() {
         return ERR_FILE;
     }
 
-    if (read_array_from_file(file_a, a, m) == ERR_FILE ||
+    if (read_array_from_file(file_a, a, n) == ERR_FILE ||
         read_array_from_file(file_b, b, n) == ERR_FILE) {
         fprintf(stderr, "Error: Unable to read arrays from files\n");
         free(a);
@@ -117,13 +125,12 @@ int main() {
         return ERR_FILE;
     }
 
-    sort_array(a, m);
+    sort_array(a, n);
     sort_array(b, n);
 
-    int result = compare_arrays(a, m, b, n);
+    int k = compare_arrays(a, b, n);
 
-    const char *output = result ? "YES" : "NO";
-    if (write_result_to_file(output_file, output) == ERR_FILE) {
+    if (write_result_to_file(output_file, k) == ERR_FILE) {
         fprintf(stderr, "Error: Unable to write result to file\n");
         free(a);
         free(b);

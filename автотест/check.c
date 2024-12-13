@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <float.h> 
 
 #define ERR_FILE -1
 #define SUCCESS 0
@@ -38,51 +37,39 @@ int read_array_from_file(const char *filename, double *array, int size) {
     return SUCCESS;
 }
 
-double find_max(double *array, int size) {
-    double max_val = -DBL_MAX;
-    for (int i = 0; i < size; i++) {
-        if (array[i] > max_val) {
-            max_val = array[i];
-        }
-    }
-    return max_val;
-}
+void process_arrays(double *a, int m, double *b, int n, double *result, int *result_size) {
+    *result_size = 0;
 
-void sort_array(double *array, int size) {
-    for (int i = 0; i < size - 1; i++) {
-        for (int j = 0; j < size - i - 1; j++) {
-            if (array[j] > array[j + 1]) {
-                double temp = array[j];
-                array[j] = array[j + 1];
-                array[j + 1] = temp;
+    // Пример обработки: объединение массивов
+    for (int i = 0; i < m; i++) {
+        result[(*result_size)++] = a[i];
+    }
+    for (int i = 0; i < n; i++) {
+        result[(*result_size)++] = b[i];
+    }
+
+    // Пример: упорядочивание результата
+    for (int i = 0; i < *result_size - 1; i++) {
+        for (int j = 0; j < *result_size - i - 1; j++) {
+            if (result[j] > result[j + 1]) {
+                double temp = result[j];
+                result[j] = result[j + 1];
+                result[j + 1] = temp;
             }
         }
     }
 }
 
-int compare_arrays(double *a, int m, double *b, int n) {
-    double max_a = find_max(a, m);
-    double max_b = find_max(b, n);
-    int max_length = (m > n) ? m : n;
-
-    for (int i = 0; i < max_length; i++) {
-        double val_a = (i < m) ? a[i] : max_a;
-        double val_b = (i < n) ? b[i] : max_b;
-
-        if (val_a >= val_b) {
-            return 0; 
-        }
-    }
-    return 1; 
-}
-
-int write_result_to_file(const char *filename, const char *result) {
+int write_result_to_file(const char *filename, double *array, int size) {
     FILE *file = fopen(filename, "w");
     if (!file) {
         return ERR_FILE;
     }
 
-    fprintf(file, "%s\n", result);
+    for (int i = 0; i < size; i++) {
+        fprintf(file, "%.6f\n", array[i]);
+    }
+
     fclose(file);
     return SUCCESS;
 }
@@ -102,10 +89,12 @@ int main() {
 
     double *a = malloc(m * sizeof(double));
     double *b = malloc(n * sizeof(double));
-    if (!a || !b) {
+    double *result = malloc((m + n) * sizeof(double));
+    if (!a || !b || !result) {
         perror("Error allocating memory");
         free(a);
         free(b);
+        free(result);
         return ERR_FILE;
     }
 
@@ -114,24 +103,24 @@ int main() {
         fprintf(stderr, "Error: Unable to read arrays from files\n");
         free(a);
         free(b);
+        free(result);
         return ERR_FILE;
     }
 
-    sort_array(a, m);
-    sort_array(b, n);
+    int result_size = 0;
+    process_arrays(a, m, b, n, result, &result_size);
 
-    int result = compare_arrays(a, m, b, n);
-
-    const char *output = result ? "YES" : "NO";
-    if (write_result_to_file(output_file, output) == ERR_FILE) {
+    if (write_result_to_file(output_file, result, result_size) == ERR_FILE) {
         fprintf(stderr, "Error: Unable to write result to file\n");
         free(a);
         free(b);
+        free(result);
         return ERR_FILE;
     }
 
     free(a);
     free(b);
+    free(result);
 
     return SUCCESS;
 }

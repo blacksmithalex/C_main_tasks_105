@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <float.h> 
+#include <math.h>
 
 #define ERR_FILE -1
 #define SUCCESS 0
+#define EPS 1e-6
 
 int count_numbers_in_file(const char *filename) {
     FILE *file = fopen(filename, "r");
@@ -61,19 +63,13 @@ void sort_array(double *array, int size) {
 }
 
 int compare_arrays(double *a, int m, double *b, int n) {
-    double max_a = find_max(a, m);
-    double max_b = find_max(b, n);
-    int max_length = (m > n) ? m : n;
-
-    for (int i = 0; i < max_length; i++) {
-        double val_a = (i < m) ? a[i] : max_a;
-        double val_b = (i < n) ? b[i] : max_b;
-
-        if (val_a >= val_b) {
-            return 0; 
-        }
+    int min_length = (m < n) ? m : n;
+    float diff = a[0] - b[0];
+    for (int i = 1; i < min_length; i++) {
+        if (fabs(a[i] - b[i] - diff) > EPS)
+            return 0;
     }
-    return 1; 
+    return 1;
 }
 
 int write_result_to_file(const char *filename, const char *result) {
