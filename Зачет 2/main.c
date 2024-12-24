@@ -54,7 +54,27 @@ int Func(int *A, int *B, int *C, int a, int b, int c) {
     }
     if (flag1 == 1) {
         return 1;
-    } else if (flag2 == 1) {
+    } 
+    if (flag2 == 1) {
+        for (i = 0; i < b; i++) {
+            flag3 = 0;
+            for (j = 0; j < a; j++)
+                if (B[i] == A[j])
+                    flag3 = 1;
+            if (flag3 == 0)
+                flag2 = 0;
+        }
+        for (i = 0; i < c; i++) {
+            flag3 = 0;
+            for (j = 0; j < a; j++)
+                if (C[i] == A[j])
+                    flag3 = 1;
+            if (flag3 == 0)
+                flag2 = 0;
+        }
+    }
+    
+    if (flag2 == 1) {
         return 2;
     } else {
         return 3;
@@ -116,7 +136,7 @@ int main(void) {
         fprintf(out, "A = B + C");
     else
         fprintf(out, "NO MATCH");
-    
+
     fclose(ina);
     fclose(inb);
     fclose(inc);
