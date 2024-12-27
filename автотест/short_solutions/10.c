@@ -1,95 +1,149 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
+// Функции
 int Len(FILE *f);
 void Scan(FILE *f, int *arr, int len);
 void Sort(int *arr, int len);
 int Func(int *A, int *B, int a, int b);
+void Output(FILE *out, int *arr, int len, int result);
 
+// Вычисление длины массива в файле
 int Len(FILE *f) {
-    int len = 0;
-    int c;
-    while (fscanf(f, "%d", &c) == 1) 
+    int len = 0, temp;
+    while (fscanf(f, "%d", &temp) == 1) {
         len++;
+    }
     return len;
 }
 
+// Считывание массива из файла
 void Scan(FILE *f, int *arr, int len) {
-    int i;
-    for (i = 0; i < len; i++) 
+    for (int i = 0; i < len; i++) {
         fscanf(f, "%d", &arr[i]);
+    }
 }
 
+// Сортировка массива пузырьком
 void Sort(int *arr, int len) {
-    int i, j, t;
-    for (i = 0; i < len - 1; i++)
-        for (j = 0; j < len - 1; j++)
+    int i, j, temp;
+    for (i = 0; i < len - 1; i++) {
+        for (j = 0; j < len - i - 1; j++) {
             if (arr[j] > arr[j + 1]) {
-                t = arr[j];
+                temp = arr[j];
                 arr[j] = arr[j + 1];
-                arr[j + 1] = t;
+                arr[j + 1] = temp;
             }
-}
-
-int Func(int *A, int *B, int a, int b) {
-    if (a == 1) return 1;
-    for (int i = 0; i < a - 1; i++) {
-        int start = A[i];
-        int end = A[i + 1];
-        int flag = 0;
-        for (int j = 0; j < b; j++) {
-            if (B[j] > start && B[j] < end) flag = 1;
         }
-        if (flag == 0) return 0;
     }
-    return 1;
 }
 
-int main(void) {
-    FILE *ina, *inb, *out;
-    int a, b, check;
+// Проверка подмножества (все элементы B должны быть в A)
+int Func(int *A, int *B, int a, int b) {
+    int i = 0, j = 0;
+    while (i < a && j < b) {
+        if (A[i] == B[j]) {
+            j++; // Совпадение найдено, проверяем следующий элемент B
+        } else if (A[i] < B[j]) {
+            i++; // Идем дальше по массиву A
+        } else {
+            return 0; // Элемент B[j] отсутствует в A
+        }
+    }
+    return j == b; // Если все элементы B найдены, возвращаем 1
+}
+
+// Вывод результата в файл
+void Output(FILE *out, int *arr, int len, int result) {
+    fprintf(out, result ? "YES\n" : "NO\n");
+    for (int i = 0; i < len; i++) {
+        fprintf(out, "%d ", arr[i]);
+    }
+    fprintf(out, "\n");
+}
+
+// Главная функция
+int main(int argc, char *argv[]) {
+    FILE *ina, *out;
+    int a, b = 0, result;
     int *A, *B;
-    ina = fopen("ina.txt", "r");
-    inb = fopen("inb.txt", "r");
-    out = fopen("output.txt", "w");
-    if (ina == NULL) 
-        return -1;
-    if (inb == NULL) {
-        fclose(ina);
+
+    // Проверка аргументов командной строки
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <input_file> <output_file>\n", argv[0]);
         return -1;
     }
-    if (out == NULL) {
-        fclose(ina);
-        fclose(inb);
+
+    // Открытие входного и выходного файлов
+    ina = fopen(argv[1], "r");
+    out = fopen(argv[2], "w");
+    if (ina == NULL || out == NULL) {
+        if (ina) fclose(ina);
+        if (out) fclose(out);
         return -1;
     }
+
+    // Чтение длины массива из файла
     a = Len(ina);
-    b = Len(inb);
-    if (a == 0 || b == 0) {
+    if (a == 0) {
         fclose(ina);
-        fclose(inb);
         fclose(out);
         return -1;
     }
+
+    // Считывание первого массива из файла
     rewind(ina);
-    rewind(inb);
-    A = (int*)malloc(a * sizeof(int));
-    B = (int*)malloc(b * sizeof(int));
+    A = (int *)malloc(a * sizeof(int));
+    if (!A) {
+        perror("Error allocating memory");
+        fclose(ina);
+        fclose(out);
+        return -1;
+    }
     Scan(ina, A, a);
-    Scan(inb, B, b);
+    fclose(ina);
+
+    // Ввод второго массива с клавиатуры
+    printf("Enter the elements of the second array (terminate with a non-integer input):\n");
+    B = NULL;
+    int capacity = 10;
+    B = (int *)malloc(capacity * sizeof(int));
+    if (!B) {
+        perror("Error allocating memory");
+        free(A);
+        fclose(out);
+        return -1;
+    }
+    while (scanf("%d", &B[b]) == 1) {
+        b++;
+        if (b >= capacity) {
+            capacity *= 2;
+            int *new_B = realloc(B, capacity * sizeof(int));
+            if (!new_B) {
+                perror("Error reallocating memory");
+                free(A);
+                free(B);
+                fclose(out);
+                return -1;
+            }
+            B = new_B;
+        }
+    }
+
+    // Сортировка массивов
     Sort(A, a);
     Sort(B, b);
-    check = Func(A, B, a, b);
-    if (check)
-        fprintf(out, "YES");
-    else
-        fprintf(out, "NO");
-    fclose(ina);
-    fclose(inb);
-    fclose(out);
+
+    // Проверка подмножества
+    result = Func(A, B, a, b);
+
+    // Запись результата в файл
+    Output(out, B, b, result);
+
+    // Очистка памяти и закрытие файлов
     free(A);
     free(B);
+    fclose(out);
+
     return 0;
 }
-
